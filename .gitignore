@@ -1,2 +1,6 @@
 .venv*
 .vscode
+__pycache__/
+*.pyc
+**/__pycache__/
+PythonWrapper/__pycache__/
