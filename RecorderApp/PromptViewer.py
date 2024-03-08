@@ -45,11 +45,11 @@ class PromptViewer:
 
     def displayIndexed(self, index: int) -> NoneType:
         cv2.imshow(self.WindowName, self.prompt[index])
-        cv2.waitKey(1) & 0xFF == ord("0")
+        _ =cv2.waitKey(1) & 0xFF == ord("0")
 
     def displayNamedPrompt(self, promptName: str) -> NoneType:
         cv2.imshow(self.WindowName, self.PromptNameDict[promptName])
-        cv2.waitKey(1) & 0xFF == ord("0")
+        _ = cv2.waitKey(1) & 0xFF == ord("0")
 
 
 class RecordChoices(StrEnum):
