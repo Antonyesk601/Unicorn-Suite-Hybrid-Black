@@ -8,9 +8,10 @@ import sys
 import os
 import asyncio
 import aiofiles
+import uvloop
 
+uvloop.install()
 sys.path.append(os.path.abspath("."))
-print(sys.path)
 from PythonWrapper import Unicorn
 
 class PromptViewer:
@@ -36,12 +37,12 @@ class PromptViewer:
     
     def displayIndexed(self, index:int)->NoneType:
         cv2.imshow(self.WindowName, self.prompt[index])
-        cv2.waitKey(0)
-    
+        cv2.waitKey(1) & 0xFF == ord('0')
+        
     def displayNamedPrompt(self, promptName:str)->NoneType:
         cv2.imshow(self.WindowName, self.PromptNameDict[promptName])
-        cv2.waitKey(0)
-
+        cv2.waitKey(1) & 0xFF == ord('0')
+        
 class RecordChoices(StrEnum):
     Up     = "Up"
     Down   = "Down"
@@ -87,20 +88,47 @@ class ExperimentInstance:
         except:
             pass
 
-    def StartExperiment(self):
+    async def StartExperiment(self):
         self.ReadTask = asyncio.create_task(self.ExperimentThread())
+        await self.ReadTask
         
     async def ExperimentThread(self):
-        self.Unicorn.StartAcquisition(self.HandleVal, True)
+        try:
+            self.Unicorn.StartAcquisition(self.HandleVal, True)
+        except:
+            pass
+        print("Started Acquisition")
         for choice in self.config.ExperimentOrder:
+            print("Rest")
             self.PromptViewer.displayNamedPrompt("Rest")
+            print(self.config.BreakLength/1000)
             await asyncio.sleep(self.config.BreakLength/1000)
-            self.PromptViewer.displayNamedPrompt(choice)
+            print(choice.value)
+            print(self.config.RecordLength/1000)
+            self.PromptViewer.displayNamedPrompt(choice.value)
             await asyncio.sleep(self.config.RecordLength/1000)
-            
-        self.Unicorn.StopAcquisition(self.HandleVal)
-        self.Unicorn.CloseDevice(self.HandleVal)
+        
+        try:
+            print("END")
+            self.Unicorn.StopAcquisition(self.HandleVal)
+            self.Unicorn.CloseDevice(self.HandleVal)
+        except:
+            pass
     
 if __name__ == "__main__":
+    
     exp  = ExperimentConfig(ExperimentOrder=[RecordChoices.Up, RecordChoices.Down, RecordChoices.Left, RecordChoices.Right, RecordChoices.Select, RecordChoices.Rest])
+    viewer = PromptViewer([], 
+                          {
+                            "Up"     :cv2.imread("RecorderApp/Up.png"), 
+                            "Down"   :cv2.imread("RecorderApp/Down.png"), 
+                            "Left"   :cv2.imread("RecorderApp/Left.png"), 
+                            "Right"  :cv2.imread("RecorderApp/Right.png"), 
+                            "Select" :cv2.imread("RecorderApp/Select.png"), 
+                            "Rest"   :cv2.imread("RecorderApp/Rest.png"),
+                           }
+                        )
+    expInstance = ExperimentInstance(exp, viewer)
+    expInstance.Config()
+    asyncio.run(expInstance.StartExperiment())
     
