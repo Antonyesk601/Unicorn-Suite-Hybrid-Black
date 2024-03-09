@@ -158,7 +158,7 @@ class ExperimentInstance:
             raise Exception("Device not connected")
         else:
             print(self.config)
-        self.Unicorn.StartAcquisition(self.HandleVal, True)
+        self.Unicorn.StartAcquisition(self.HandleVal, False)
         writeThread = Thread(target=self.WriteThread)
         writeThread.start()
         print("Started Acquisition")
@@ -178,7 +178,7 @@ class ExperimentInstance:
             self.Unicorn.StopAcquisition(self.HandleVal)
             mixer.music.play()
             cv2.waitKey(0)
-            self.Unicorn.StartAcquisition(self.HandleVal, True)
+            self.Unicorn.StartAcquisition(self.HandleVal, False)
 
             print(choice.value)
             print(self.config.RecordLength / 1000)
@@ -188,7 +188,7 @@ class ExperimentInstance:
             mixer.music.play()
             self.Unicorn.StopAcquisition(self.HandleVal)
             cv2.waitKey(0)
-            self.Unicorn.StartAcquisition(self.HandleVal, True)
+            self.Unicorn.StartAcquisition(self.HandleVal, False)
 
         try:
             print("END")
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     ]
     shuffle(recordSets)
 
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Antony")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Anas")
     viewer = PromptViewer(
         [],
         {

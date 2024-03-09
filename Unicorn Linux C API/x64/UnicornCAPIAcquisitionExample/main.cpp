@@ -7,9 +7,9 @@
 // Specifications for the data acquisition.
 //-------------------------------------------------------------------------------------
 #define DATA_FILE				"data.bin"		// The name of the file which is storing acquired data.
-#define ACQUISITION_DURATION_S	10.0f			// The acquisition duration in seconds.
+#define ACQUISITION_DURATION_S	100.0f			// The acquisition duration in seconds.
 #define FRAME_LENGTH			1				// The number of samples acquired per get data call.
-#define TESTSIGNAL_ENABLED		true			// Flag to enable or disable testsignal.
+#define TESTSIGNAL_ENABLED		false			// Flag to enable or disable testsignal.
 
 // Function declarations.
 //-------------------------------------------------------------------------------------
@@ -75,7 +75,9 @@ int main(int argc, char** argv)
 
 		std::cout << "Connected to '" << availableDevices[deviceSelection] << "'." << std::endl;
 		std::cout << "Device Handle: " << deviceHandle << std::endl;
-
+		
+		// errorCode = UNICORN_SetDigitalOutputs(deviceHandle,127);
+		// std::cout<<errorCode; 
 		// Create a file to store data.
 		std::ofstream file(DATA_FILE, std::ios_base::binary);
 

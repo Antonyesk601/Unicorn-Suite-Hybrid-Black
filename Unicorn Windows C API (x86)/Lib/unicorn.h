@@ -375,7 +375,7 @@ UNICORN_API int UNICORN_GetConfiguration(UNICORN_HANDLE hDevice, UNICORN_AMPLIFI
 										Call \ref UNICORN_GetChannelIndex to determine the index of a channel within a scan. 
 										Example: 
 										The sample of the battery level channel in the n-th scan is:
-										n* \ref UNICORN_GetNumberOfAcquiredChannels()+ \ref UNICORN_GetChannelIndex(“Battery Level”)
+										n* \ref UNICORN_GetNumberOfAcquiredChannels()+ \ref UNICORN_GetChannelIndex(ï¿½Battery Levelï¿½)
 	\param destinationBufferLength		Number of floats fitting into destination buffer.
 
 	\return		An error code is returned as integer if data could not be read.
@@ -431,9 +431,9 @@ UNICORN_API int UNICORN_GetDeviceInformation(UNICORN_HANDLE hDevice, UNICORN_DEV
 	\param hDevice					The \ref UNICORN_HANDLE associated with the session.
 	\param digitalOutputs			A pointer to a variable that receives the states of the digital
 									output channels. Each bit represents one digital output channel.
-									If a bit is set, the corresponding digital output channel’s value is
+									If a bit is set, the corresponding digital output channelï¿½s value is
 									set to high. If a bit is cleared, the corresponding digital output
-									channel’s value is set to low.
+									channelï¿½s value is set to low.
 									Examples (the binary representation of each decimal value is
 									shown in parentheses): 
 									   0   (0b00000000) -> all digital outputs set to low.
@@ -451,8 +451,8 @@ UNICORN_API int UNICORN_SetDigitalOutputs(UNICORN_HANDLE hDevice, uint8_t digita
 	\param hDevice					The \ref UNICORN_HANDLE associated with the session.
 	\param digitalOutputs			The state of the digital output channels to set in bits. Each bit
 									represents one digital output channel. Set a bit to set the
-									corresponding digital output channel’s value to high. Clear a bit to
-									set the corresponding digital output channel’s value to low.
+									corresponding digital output channelï¿½s value to high. Clear a bit to
+									set the corresponding digital output channelï¿½s value to low.
 									Examples (the binary representation of each decimal value is
 									shown in parentheses): 
 									   0   (0b00000000) -> all digital outputs set to low.
