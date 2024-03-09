@@ -7,10 +7,12 @@ from dataclasses import dataclass, asdict
 import sys
 import os
 import asyncio
-from asyncio.queues import Queue
+from threading import Thread
+from queue import Queue
 import aiofiles
 import uvloop
 import datetime
+from random import shuffle
 from pygame import mixer
 
 uvloop.install()
@@ -45,7 +47,7 @@ class PromptViewer:
 
     def displayIndexed(self, index: int) -> NoneType:
         cv2.imshow(self.WindowName, self.prompt[index])
-        _ =cv2.waitKey(1) & 0xFF == ord("0")
+        _ = cv2.waitKey(1) & 0xFF == ord("0")
 
     def displayNamedPrompt(self, promptName: str) -> NoneType:
         cv2.imshow(self.WindowName, self.PromptNameDict[promptName])
@@ -98,45 +100,59 @@ class ExperimentInstance:
 
             CurrentConfig = self.Unicorn.GetConfiguration(self.HandleVal)
             print("Current Config: ", CurrentConfig[1])
-
             if self.config.HeadsetConfig is not None:
                 setConfigOut = self.Unicorn.SetConfiguration(
                     self.HandleVal, self.config.HeadsetConfig
                 )
                 if setConfigOut != Unicorn.UnicornReturnStatus.Success:
                     raise Exception("Failed to set Configuration")
-        except:
-            pass
+            else:
+                self.config.HeadsetConfig = CurrentConfig[0]
+        except Exception as e:
+            print(e)
 
     async def StartExperiment(self):
-        self.ReadTask = asyncio.create_task(self.ExperimentThread())
+        self.ReadTask = self.ExperimentThread()
         await self.ReadTask
 
     async def RecordForLength(self, length: int):
         if self.config.HeadsetConfig is None:
             raise Exception("Headset Config Not Set")
-        
+
         for i in range(length):
             getDataOutput = self.Unicorn.GetData(
                 self.HandleVal, 1, len(self.config.HeadsetConfig.channels)
             )
             if getDataOutput[1] == Unicorn.UnicornReturnStatus.Success:
+                # print("GOT DATA")
+                # print(getDataOutput)
                 yield getDataOutput[0]
             else:
                 raise Exception("Failed to get Data", getDataOutput[1])
 
-    async def WriteThread(self):
-        file: aiofiles.threadpool.text.AsyncTextIOWrapper
+    def WriteThread(self):
+        # file: aiofiles.threadpool.text.AsyncTextIOWrapper
+        print("WRITE STARTED")
         fileName = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".csv"
-        async with aiofiles.open(fileName, mode="a") as file:
+        with open(fileName, "a") as file:
             while True:
-                data = await self.OutputQueue.get()
-                dataCSV = ",".join(str(i) for i in data[0])
-                await file.write(f"{dataCSV},{data[1]}\n")
+                try:
+                    try:
+                        data = self.OutputQueue.get()
+                    except Exception as e:
+                        continue
+                    dataCSV = ",".join(str(i) for i in data[0])
+                    file.write(f"{dataCSV},{data[1]}\n")
+                except Exception as e:
+                    print(e)
+
 
     async def ExperimentThread(self):
+        if self.config is None:
+            raise Exception("Device not connected")
         self.Unicorn.StartAcquisition(self.HandleVal, True)
-        writeThread = asyncio.create_task(self.WriteThread())
+        writeThread = Thread(target = self.WriteThread)
+        writeThread.start()
         print("Started Acquisition")
         RecordDataCalls = int(
             self.config.RecordLength / 1000 * Unicorn.unicorn.UNICORN_SAMPLING_RATE
@@ -150,44 +166,54 @@ class ExperimentInstance:
             print(self.config.BreakLength / 1000)
             self.PromptViewer.displayNamedPrompt("Rest")
             async for data in self.RecordForLength(RestDataCalls):
-                await self.OutputQueue.put((data, "Rest"))
+                self.OutputQueue.put((data, "Rest"))
             mixer.music.play()
-            self.Unicorn.StopAcquisition(self.HandleVal)
-            cv2.waitKey(0)
-            self.Unicorn.StartAcquisition(self.HandleVal, True)
+            # self.Unicorn.StopAcquisition(self.HandleVal)
+            # cv2.waitKey(0)
+            # self.Unicorn.StartAcquisition(self.HandleVal, True)
 
             print(choice.value)
             print(self.config.RecordLength / 1000)
             self.PromptViewer.displayNamedPrompt(choice.value)
             async for data in self.RecordForLength(RecordDataCalls):
-                await self.OutputQueue.put((data, choice.value))
+                self.OutputQueue.put((data, choice.value))
             mixer.music.play()
             self.Unicorn.StopAcquisition(self.HandleVal)
             cv2.waitKey(0)
             self.Unicorn.StartAcquisition(self.HandleVal, True)
 
-
         try:
             print("END")
             self.Unicorn.StopAcquisition(self.HandleVal)
             self.Unicorn.CloseDevice(self.HandleVal)
-            await writeThread
         except:
             pass
+        finally:
+            writeThread.join()
 
 
 if __name__ == "__main__":
 
-    exp = ExperimentConfig(
-        ExperimentOrder=[
-            RecordChoices.Up,
-            RecordChoices.Down,
-            RecordChoices.Left,
-            RecordChoices.Right,
-            RecordChoices.Select,
-            RecordChoices.Rest,
-        ]
-    )
+    recordSets = [
+        RecordChoices.Up,
+        RecordChoices.Left,
+        RecordChoices.Right,
+        RecordChoices.Down,
+        RecordChoices.Select,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Up,
+        RecordChoices.Up,
+        RecordChoices.Right,
+        RecordChoices.Right,
+    ]
+    shuffle(recordSets)
+    
+    exp = ExperimentConfig(ExperimentOrder=recordSets)
     viewer = PromptViewer(
         [],
         {
@@ -201,4 +227,8 @@ if __name__ == "__main__":
     )
     expInstance = ExperimentInstance(exp, viewer)
     expInstance.Config()
-    asyncio.run(expInstance.StartExperiment())
+    try:
+        asyncio.run(expInstance.StartExperiment())
+    finally:
+        if hasattr(expInstance,"HandleVal"):
+            Unicorn.CloseDevice(expInstance.HandleRef)

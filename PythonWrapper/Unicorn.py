@@ -60,7 +60,7 @@ def GetAvailableDevices(rescan:bool)-> tuple[list[str], UnicornReturnStatus]:
     output = UnicornReturnStatus(unicorn.lib.UNICORN_GetAvailableDevices(AvailableDevicesCtypes, ctypes.byref(DeviceCount), rescan))
     return [device.value for device in AvailableDevicesCtypes], output
 
-def OpenDevice(serial:str)->tuple[ctypes._CArgObject, int, UnicornReturnStatus]:
+def OpenDevice(serial:str)->tuple[int, int, UnicornReturnStatus]:
     handle = unicorn.UNICORN_HANDLE()
     output = UnicornReturnStatus(unicorn.lib.UNICORN_OpenDevice(serial.encode(), ctypes.byref(handle)))
     return ctypes.byref(handle), handle.value, output
