@@ -71,10 +71,9 @@ class ExperimentConfig:
     """
 
     ExperimentOrder: list[RecordChoices]
-    RecordLength: int = 3000
+    RecordLength: int = 5000
     BreakLength: int = 5000
     HeadsetConfig: Optional[Unicorn.UnicornAmplifierConfiguration] = None
-    AudioQueuePath: Optional[str] = None
     SubjectID: Optional[str] = None
     AudioFile: str = "RecorderApp/Signal.mp3"
     HeadsetSerial: str = "UN-2021.12.19"
@@ -89,7 +88,7 @@ class ExperimentInstance:
     def Config(self):
         mixer.init()
         mixer.music.load(self.config.AudioFile)
-        mixer.music.play()
+        # mixer.music.play()
         self.Unicorn = Unicorn
         try:
             OpenDeviceOut = self.Unicorn.OpenDevice(self.config.HeadsetSerial)
@@ -134,24 +133,33 @@ class ExperimentInstance:
         # file: aiofiles.threadpool.text.AsyncTextIOWrapper
         print("WRITE STARTED")
         fileName = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".csv"
-        with open(fileName, "a") as file:
+        if self.config.SubjectID is not None:
+            fileName = self.config.SubjectID + "-" + fileName
+        if not os.path.exists("RecordedSessions"):
+            os.mkdir("RecordedSessions")
+        with open(f"RecordedSessions/{fileName}", "a") as file:
+            headers = [x.name for x in self.config.HeadsetConfig.channels]
+            file.write(",".join(headers) + "\n")
             while True:
                 try:
                     try:
                         data = self.OutputQueue.get()
                     except Exception as e:
                         continue
+                    if data == "DONE":
+                        return
                     dataCSV = ",".join(str(i) for i in data[0])
                     file.write(f"{dataCSV},{data[1]}\n")
                 except Exception as e:
                     print(e)
 
-
     async def ExperimentThread(self):
         if self.config is None:
             raise Exception("Device not connected")
+        else:
+            print(self.config)
         self.Unicorn.StartAcquisition(self.HandleVal, True)
-        writeThread = Thread(target = self.WriteThread)
+        writeThread = Thread(target=self.WriteThread)
         writeThread.start()
         print("Started Acquisition")
         RecordDataCalls = int(
@@ -167,10 +175,10 @@ class ExperimentInstance:
             self.PromptViewer.displayNamedPrompt("Rest")
             async for data in self.RecordForLength(RestDataCalls):
                 self.OutputQueue.put((data, "Rest"))
+            self.Unicorn.StopAcquisition(self.HandleVal)
             mixer.music.play()
-            # self.Unicorn.StopAcquisition(self.HandleVal)
-            # cv2.waitKey(0)
-            # self.Unicorn.StartAcquisition(self.HandleVal, True)
+            cv2.waitKey(0)
+            self.Unicorn.StartAcquisition(self.HandleVal, True)
 
             print(choice.value)
             print(self.config.RecordLength / 1000)
@@ -184,12 +192,14 @@ class ExperimentInstance:
 
         try:
             print("END")
+            self.OutputQueue.put("DONE")
             self.Unicorn.StopAcquisition(self.HandleVal)
             self.Unicorn.CloseDevice(self.HandleVal)
         except:
             pass
         finally:
             writeThread.join()
+        return
 
 
 if __name__ == "__main__":
@@ -212,8 +222,8 @@ if __name__ == "__main__":
         RecordChoices.Right,
     ]
     shuffle(recordSets)
-    
-    exp = ExperimentConfig(ExperimentOrder=recordSets)
+
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Antony")
     viewer = PromptViewer(
         [],
         {
@@ -230,5 +240,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(expInstance.StartExperiment())
     finally:
-        if hasattr(expInstance,"HandleVal"):
+        if hasattr(expInstance, "HandleVal"):
             Unicorn.CloseDevice(expInstance.HandleRef)
