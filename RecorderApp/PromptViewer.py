@@ -84,7 +84,7 @@ class ExperimentInstance:
         self.config = config
         self.PromptViewer = promptViewer
         self.OutputQueue: Queue[tuple[list[float], str]] = Queue()
-
+        
     def Config(self):
         mixer.init()
         mixer.music.load(self.config.AudioFile)
@@ -130,7 +130,20 @@ class ExperimentInstance:
                 yield getDataOutput[0]
             else:
                 print("Failed to get Data", getDataOutput[1])
-
+    
+    def RecordContinuously(self):
+        if self.config.HeadsetConfig is None:
+            raise Exception("Headset Config Not Set")
+        while True:
+            getDataOutput = self.Unicorn.GetData(
+                self.HandleVal, 1, len(self.config.HeadsetConfig.channels)
+            )
+            if getDataOutput[1] == Unicorn.UnicornReturnStatus.Success:
+                # print("GOT DATA")
+                # print(getDataOutput)
+                self.OutputQueue.put((getDataOutput[0],self.CurrentState))
+            else:
+                print("Failed to get Data", getDataOutput[1])
     def WriteThread(self):
         # file: aiofiles.threadpool.text.AsyncTextIOWrapper
         print("WRITE STARTED")
@@ -172,26 +185,29 @@ class ExperimentInstance:
             self.config.BreakLength / 1000 * Unicorn.unicorn.UNICORN_SAMPLING_RATE
         )
 
+        self.Unicorn.StartAcquisition(self.HandleVal, False)
+        ReadTask  = Thread(target=self.RecordContinuously)
+        ReadTask.start()
         for choice in self.config.ExperimentOrder:
             print("Rest")
+            self.CurrentState = "Rest"
             print(self.config.BreakLength / 1000)
             self.PromptViewer.displayNamedPrompt("Rest")
-            async for data in self.RecordForLength(RestDataCalls):
-                self.OutputQueue.put((data, "Rest"))
-            self.Unicorn.StopAcquisition(self.HandleVal)
+            await asyncio.sleep(self.config.BreakLength / 1000)
+            # self.Unicorn.StopAcquisition(self.HandleVal)
+            self.CurrentState = "Wait"
             mixer.music.play()
             cv2.waitKey(0)
-            self.Unicorn.StartAcquisition(self.HandleVal, False)
-
+            self.CurrentState = str(choice.value)
             print(choice.value)
             print(self.config.RecordLength / 1000)
             self.PromptViewer.displayNamedPrompt(choice.value)
-            async for data in self.RecordForLength(RecordDataCalls):
-                self.OutputQueue.put((data, choice.value))
+            await asyncio.sleep(self.config.RecordLength / 1000)
+            self.CurrentState = "Wait"
             mixer.music.play()
-            self.Unicorn.StopAcquisition(self.HandleVal)
+            # self.Unicorn.StopAcquisition(self.HandleVal)
             cv2.waitKey(0)
-            self.Unicorn.StartAcquisition(self.HandleVal, False)
+            # self.Unicorn.StartAcquisition(self.HandleVal, False)
 
         try:
             print("END")
@@ -202,6 +218,7 @@ class ExperimentInstance:
             pass
         finally:
             writeThread.join()
+            ReadTask.join()
         return
 
 
@@ -210,33 +227,33 @@ if __name__ == "__main__":
     recordSets = [
         RecordChoices.Up,
         RecordChoices.Up,
-        # RecordChoices.Up,
-        # RecordChoices.Up,
-        # RecordChoices.Up,
-        # RecordChoices.Left,
-        # RecordChoices.Left,
-        # RecordChoices.Left,
-        # RecordChoices.Left,
-        # RecordChoices.Left,
-        # RecordChoices.Right,
-        # RecordChoices.Right,
-        # RecordChoices.Right,
-        # RecordChoices.Right,
-        # RecordChoices.Right,
-        # RecordChoices.Down,
-        # RecordChoices.Down,
-        # RecordChoices.Down,
-        # RecordChoices.Down,
-        # RecordChoices.Down,
-        # RecordChoices.Select,
-        # RecordChoices.Select,
-        # RecordChoices.Select,
-        # RecordChoices.Select,
-        # RecordChoices.Select,
+        RecordChoices.Up,
+        RecordChoices.Up,
+        RecordChoices.Up,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Select,
     ]
     # shuffle(recordSets)
 
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Sokkar")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Eyad")
     viewer = PromptViewer(
         [],
         {
