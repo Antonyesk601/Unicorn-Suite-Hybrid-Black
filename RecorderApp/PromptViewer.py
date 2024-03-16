@@ -107,8 +107,10 @@ class ExperimentInstance:
                     raise Exception("Failed to set Configuration")
             else:
                 self.config.HeadsetConfig = CurrentConfig[0]
+            mixer.music.play()
         except Exception as e:
             print(e)
+
 
     async def StartExperiment(self):
         self.ReadTask = self.ExperimentThread()
@@ -127,7 +129,7 @@ class ExperimentInstance:
                 # print(getDataOutput)
                 yield getDataOutput[0]
             else:
-                raise Exception("Failed to get Data", getDataOutput[1])
+                print("Failed to get Data", getDataOutput[1])
 
     def WriteThread(self):
         # file: aiofiles.threadpool.text.AsyncTextIOWrapper
@@ -233,7 +235,7 @@ if __name__ == "__main__":
     ]
     # shuffle(recordSets)
 
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Anas")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Sokkar")
     viewer = PromptViewer(
         [],
         {
@@ -247,8 +249,12 @@ if __name__ == "__main__":
     )
     expInstance = ExperimentInstance(exp, viewer)
     expInstance.Config()
+    cv2.waitKey(0)
     try:
         asyncio.run(expInstance.StartExperiment())
     finally:
-        if hasattr(expInstance, "HandleVal"):
-            Unicorn.CloseDevice(expInstance.HandleRef)
+        try:
+            if hasattr(expInstance, "HandleVal"):
+                Unicorn.CloseDevice(expInstance.HandleRef)
+        except Exception as e:
+            print(e)
