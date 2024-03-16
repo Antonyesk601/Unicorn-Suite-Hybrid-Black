@@ -72,7 +72,7 @@ class ExperimentConfig:
 
     ExperimentOrder: list[RecordChoices]
     RecordLength: int = 5000
-    BreakLength: int = 5000
+    BreakLength: int = 10000
     HeadsetConfig: Optional[Unicorn.UnicornAmplifierConfiguration] = None
     SubjectID: Optional[str] = None
     AudioFile: str = "RecorderApp/Signal.mp3"
@@ -206,22 +206,32 @@ if __name__ == "__main__":
 
     recordSets = [
         RecordChoices.Up,
-        RecordChoices.Left,
-        RecordChoices.Right,
-        RecordChoices.Down,
-        RecordChoices.Select,
-        RecordChoices.Down,
-        RecordChoices.Down,
-        RecordChoices.Left,
-        RecordChoices.Left,
-        RecordChoices.Select,
-        RecordChoices.Select,
         RecordChoices.Up,
         RecordChoices.Up,
+        RecordChoices.Up,
+        RecordChoices.Up,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Left,
+        RecordChoices.Left,
         RecordChoices.Right,
         RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Right,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Down,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Select,
+        RecordChoices.Select,
     ]
-    shuffle(recordSets)
+    # shuffle(recordSets)
 
     exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Anas")
     viewer = PromptViewer(
