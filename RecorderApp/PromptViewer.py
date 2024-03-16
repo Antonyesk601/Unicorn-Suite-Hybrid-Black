@@ -141,6 +141,7 @@ class ExperimentInstance:
             os.mkdir("RecordedSessions")
         with open(f"RecordedSessions/{fileName}", "a") as file:
             headers = [x.name for x in self.config.HeadsetConfig.channels]
+            headers.append("State")
             file.write(",".join(headers) + "\n")
             while True:
                 try:
@@ -209,29 +210,29 @@ if __name__ == "__main__":
     recordSets = [
         RecordChoices.Up,
         RecordChoices.Up,
-        RecordChoices.Up,
-        RecordChoices.Up,
-        RecordChoices.Up,
-        RecordChoices.Left,
-        RecordChoices.Left,
-        RecordChoices.Left,
-        RecordChoices.Left,
-        RecordChoices.Left,
-        RecordChoices.Right,
-        RecordChoices.Right,
-        RecordChoices.Right,
-        RecordChoices.Right,
-        RecordChoices.Right,
-        RecordChoices.Down,
-        RecordChoices.Down,
-        RecordChoices.Down,
-        RecordChoices.Down,
-        RecordChoices.Down,
-        RecordChoices.Select,
-        RecordChoices.Select,
-        RecordChoices.Select,
-        RecordChoices.Select,
-        RecordChoices.Select,
+        # RecordChoices.Up,
+        # RecordChoices.Up,
+        # RecordChoices.Up,
+        # RecordChoices.Left,
+        # RecordChoices.Left,
+        # RecordChoices.Left,
+        # RecordChoices.Left,
+        # RecordChoices.Left,
+        # RecordChoices.Right,
+        # RecordChoices.Right,
+        # RecordChoices.Right,
+        # RecordChoices.Right,
+        # RecordChoices.Right,
+        # RecordChoices.Down,
+        # RecordChoices.Down,
+        # RecordChoices.Down,
+        # RecordChoices.Down,
+        # RecordChoices.Down,
+        # RecordChoices.Select,
+        # RecordChoices.Select,
+        # RecordChoices.Select,
+        # RecordChoices.Select,
+        # RecordChoices.Select,
     ]
     # shuffle(recordSets)
 
