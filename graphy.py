@@ -96,9 +96,8 @@ if __name__ == '__main__':
 
     directory_path = sys.argv[1]
     csv_file_name = find_latest_csv(directory_path)
-
     # Example usage
-    df = pd.read_csv(csv_file_name)  # Load your CSV file
+    df = pd.read_csv(os.path.join(directory_path,csv_file_name))  # Load your CSV file
     segments = identify_segments(df)
 
     app = dash.Dash(__name__)
@@ -145,6 +144,8 @@ if __name__ == '__main__':
                 plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
             ) for i in range(1, 9)
         ]
+        # for fig in eeg_figures:
+        #     fig.update_yaxes(range=[230_000,270_000])
         
         # Update segment graphs independently
         segment_figures = []

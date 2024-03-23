@@ -11,10 +11,9 @@ from threading import Thread
 from queue import Queue
 import aiofiles
 import uvloop
-import datetime
-from random import shuffle
+import datetime 
 from pygame import mixer
-
+import time
 uvloop.install()
 sys.path.append(os.path.abspath("."))
 from PythonWrapper import Unicorn
@@ -78,7 +77,9 @@ class ExperimentConfig:
     AudioFile: str = "RecorderApp/Signal.mp3"
     HeadsetSerial: str = "UN-2021.12.19"
 
-
+@dataclass
+class Run:
+    run:bool
 class ExperimentInstance:
     def __init__(self, config: ExperimentConfig, promptViewer: PromptViewer):
         self.config = config
@@ -131,10 +132,10 @@ class ExperimentInstance:
             else:
                 print("Failed to get Data", getDataOutput[1])
     
-    def RecordContinuously(self):
+    def RecordContinuously(self,run:Run=None):
         if self.config.HeadsetConfig is None:
             raise Exception("Headset Config Not Set")
-        while True:
+        while (True and run.run is None) or run.run:
             getDataOutput = self.Unicorn.GetData(
                 self.HandleVal, 1, len(self.config.HeadsetConfig.channels)
             )
@@ -175,6 +176,7 @@ class ExperimentInstance:
         else:
             print(self.config)
         self.Unicorn.StartAcquisition(self.HandleVal, False)
+        run = Run(run=True)
         writeThread = Thread(target=self.WriteThread)
         writeThread.start()
         print("Started Acquisition")
@@ -186,7 +188,7 @@ class ExperimentInstance:
         )
 
         self.Unicorn.StartAcquisition(self.HandleVal, False)
-        ReadTask  = Thread(target=self.RecordContinuously)
+        ReadTask  = Thread(target=self.RecordContinuously,args=(run,))
         ReadTask.start()
         for choice in self.config.ExperimentOrder:
             print("Rest")
@@ -211,6 +213,7 @@ class ExperimentInstance:
 
         try:
             print("END")
+            run.run = False
             self.OutputQueue.put("DONE")
             self.Unicorn.StopAcquisition(self.HandleVal)
             self.Unicorn.CloseDevice(self.HandleVal)
@@ -251,18 +254,19 @@ if __name__ == "__main__":
         RecordChoices.Select,
         RecordChoices.Select,
     ]
-    # shuffle(recordSets)
-
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Eyad")
+    np.random.seed(seed = int(time.time()))
+    np.random.shuffle(recordSets)
+    print(recordSets)
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Eslam")
     viewer = PromptViewer(
         [],
         {
-            "Up": cv2.imread("RecorderApp/Up.png"),
-            "Down": cv2.imread("RecorderApp/Down.png"),
-            "Left": cv2.imread("RecorderApp/Left.png"),
-            "Right": cv2.imread("RecorderApp/Right.png"),
-            "Select": cv2.imread("RecorderApp/Select.png"),
-            "Rest": cv2.imread("RecorderApp/Rest.png"),
+            "Up": cv2.imread("RecorderApp/Pictures/Up.png"),
+            "Down": cv2.imread("RecorderApp/Pictures/Down.png"),
+            "Left": cv2.imread("RecorderApp/Pictures/Left.png"),
+            "Right": cv2.imread("RecorderApp/Pictures/Right.png"),
+            "Select": cv2.imread("RecorderApp/Pictures/Select.png"),
+            "Rest": cv2.imread("RecorderApp/Pictures/Rest.png"),
         },
     )
     expInstance = ExperimentInstance(exp, viewer)
