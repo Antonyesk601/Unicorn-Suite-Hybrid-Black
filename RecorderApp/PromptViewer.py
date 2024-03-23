@@ -132,10 +132,10 @@ class ExperimentInstance:
             else:
                 print("Failed to get Data", getDataOutput[1])
     
-    def RecordContinuously(self,run:Run=None):
+    def RecordContinuously(self,run:Optional[Run]=None):
         if self.config.HeadsetConfig is None:
             raise Exception("Headset Config Not Set")
-        while (True and run.run is None) or run.run:
+        while (True and run is None) or run.run:
             getDataOutput = self.Unicorn.GetData(
                 self.HandleVal, 1, len(self.config.HeadsetConfig.channels)
             )
@@ -147,6 +147,8 @@ class ExperimentInstance:
                 print("Failed to get Data", getDataOutput[1])
     def WriteThread(self):
         # file: aiofiles.threadpool.text.AsyncTextIOWrapper
+        if self.config.HeadsetConfig is None:
+            raise Exception("Headset Config Not Set")
         print("WRITE STARTED")
         fileName = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".csv"
         if self.config.SubjectID is not None:
@@ -163,7 +165,7 @@ class ExperimentInstance:
                         data = self.OutputQueue.get()
                     except Exception as e:
                         continue
-                    if data == "DONE":
+                    if data[1] == "DONE":
                         return
                     dataCSV = ",".join(str(i) for i in data[0])
                     file.write(f"{dataCSV},{data[1]}\n")
@@ -214,7 +216,7 @@ class ExperimentInstance:
         try:
             print("END")
             run.run = False
-            self.OutputQueue.put("DONE")
+            self.OutputQueue.put(([],"DONE"))
             self.Unicorn.StopAcquisition(self.HandleVal)
             self.Unicorn.CloseDevice(self.HandleVal)
         except:
@@ -257,15 +259,15 @@ if __name__ == "__main__":
     np.random.seed(seed = int(time.time()))
     np.random.shuffle(recordSets)
     print(recordSets)
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="EslamPic")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="CanadyPic")
     viewer = PromptViewer(
         [],
         {
-            "Up": cv2.imread("RecorderApp/Pictures/UpArrow.png"),
-            "Down": cv2.imread("RecorderApp/Pictures/DownArrow.png"),
-            "Left": cv2.imread("RecorderApp/Pictures/LeftArrow.png"),
-            "Right": cv2.imread("RecorderApp/Pictures/RightArrow.png"),
-            "Select": cv2.imread("RecorderApp/Pictures/SelectImage.png"),
+            "Up": cv2.imread("RecorderApp/Pictures/Up.png"),
+            "Down": cv2.imread("RecorderApp/Pictures/Down.png"),
+            "Left": cv2.imread("RecorderApp/Pictures/Left.png"),
+            "Right": cv2.imread("RecorderApp/Pictures/Right.png"),
+            "Select": cv2.imread("RecorderApp/Pictures/Select.png"),
             "Rest": cv2.imread("RecorderApp/Pictures/Rest.png"),
         },
     )
