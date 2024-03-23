@@ -257,15 +257,15 @@ if __name__ == "__main__":
     np.random.seed(seed = int(time.time()))
     np.random.shuffle(recordSets)
     print(recordSets)
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Eslam")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="EslamPic")
     viewer = PromptViewer(
         [],
         {
-            "Up": cv2.imread("RecorderApp/Pictures/Up.png"),
-            "Down": cv2.imread("RecorderApp/Pictures/Down.png"),
-            "Left": cv2.imread("RecorderApp/Pictures/Left.png"),
-            "Right": cv2.imread("RecorderApp/Pictures/Right.png"),
-            "Select": cv2.imread("RecorderApp/Pictures/Select.png"),
+            "Up": cv2.imread("RecorderApp/Pictures/UpArrow.png"),
+            "Down": cv2.imread("RecorderApp/Pictures/DownArrow.png"),
+            "Left": cv2.imread("RecorderApp/Pictures/LeftArrow.png"),
+            "Right": cv2.imread("RecorderApp/Pictures/RightArrow.png"),
+            "Select": cv2.imread("RecorderApp/Pictures/SelectImage.png"),
             "Rest": cv2.imread("RecorderApp/Pictures/Rest.png"),
         },
     )
