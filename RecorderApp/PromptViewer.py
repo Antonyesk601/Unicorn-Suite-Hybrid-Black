@@ -177,6 +177,7 @@ class ExperimentInstance:
             raise Exception("Device not connected")
         else:
             print(self.config)
+        self.CurrentState = "Wait"
         self.Unicorn.StartAcquisition(self.HandleVal, False)
         run = Run(run=True)
         writeThread = Thread(target=self.WriteThread)
@@ -259,7 +260,7 @@ if __name__ == "__main__":
     np.random.seed(seed = int(time.time()))
     np.random.shuffle(recordSets)
     print(recordSets)
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="CanadyPic")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Seif Kassab")
     viewer = PromptViewer(
         [],
         {
