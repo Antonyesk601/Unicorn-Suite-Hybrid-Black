@@ -129,10 +129,7 @@ if __name__ == '__main__':
             n_intervals=0
         )
     ])
-
-
-
-
+    
     @app.callback(
         [Output(f'eeg-{i}', 'figure') for i in range(1, 9)] +
         [Output(f'segment-graph-{i}', 'figure') for i in range(4)],
