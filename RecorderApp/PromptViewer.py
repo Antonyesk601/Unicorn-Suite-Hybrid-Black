@@ -183,14 +183,6 @@ class ExperimentInstance:
         writeThread = Thread(target=self.WriteThread)
         writeThread.start()
         print("Started Acquisition")
-        RecordDataCalls = int(
-            self.config.RecordLength / 1000 * Unicorn.unicorn.UNICORN_SAMPLING_RATE
-        )
-        RestDataCalls = int(
-            self.config.BreakLength / 1000 * Unicorn.unicorn.UNICORN_SAMPLING_RATE
-        )
-
-        self.Unicorn.StartAcquisition(self.HandleVal, False)
         ReadTask  = Thread(target=self.RecordContinuously,args=(run,))
         ReadTask.start()
         for choice in self.config.ExperimentOrder:
@@ -210,9 +202,7 @@ class ExperimentInstance:
             await asyncio.sleep(self.config.RecordLength / 1000)
             self.CurrentState = "Wait"
             mixer.music.play()
-            # self.Unicorn.StopAcquisition(self.HandleVal)
             cv2.waitKey(0)
-            # self.Unicorn.StartAcquisition(self.HandleVal, False)
 
         try:
             print("END")
