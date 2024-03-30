@@ -9,6 +9,16 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+# Defining a function to remove outliers using the IQR method
+def remove_outliers(df, column_names):
+    Q1 = df[column_names].quantile(0.25)
+    Q3 = df[column_names].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    df_filtered = df[((df[column_names] >= lower_bound) & (df[column_names] <= upper_bound)).all(axis=1)]
+    return df_filtered
+
 def find_latest_csv(directory):
     try:
         # List all files in the given directory
@@ -93,19 +103,25 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("Usage: python script.py <directory_path>")
         sys.exit(1)
-
+    
     directory_path = sys.argv[1]
-    csv_file_name = find_latest_csv(directory_path)
-    # Example usage
-    df = pd.read_csv(os.path.join(directory_path,csv_file_name))  # Load your CSV file
-    segments = identify_segments(df)
+    csv_file_name = 'Antony-2024-03-16-12-33-17.csv'#find_latest_csv(directory_path)
+    if csv_file_name is None:
+        sys.exit("No CSV file found. Exiting application.")
+
+    full_csv_path = os.path.join(directory_path, csv_file_name)
+    df = pd.read_csv(full_csv_path)  # Load the found CSV file
+
+    eeg_columns = [col for col in df.columns if 'EEG' in col]
+
+    df = remove_outliers(df, eeg_columns)
+
+    segments = identify_segments(df)  # Assuming you have this function defined
 
     app = dash.Dash(__name__)
 
-    # Calculate stats for the right column header
-    total_rows = len(df)
-    session_length_seconds = total_rows / 250
-    segments_count_text = "\n".join([f"{cls}: {len(segs)} segments" for cls, segs in segments.items()])
+    # Dynamically create segment graph components based on the number of classes
+    segment_graph_components = [dcc.Graph(id=f'segment-graph-{cls}', figure={}) for cls in segments.keys()]
 
     app.layout = html.Div([
         html.H3(csv_file_name, style={'textAlign': 'center', 'marginBottom': '20px'}),
@@ -115,11 +131,11 @@ if __name__ == '__main__':
             ], style={'width': '50%', 'display': 'inline-block', 'verticalAlign': 'top', 'height': '95vh', 'overflowY': 'scroll'}),
             
             html.Div([
-                html.H4(f"Total Rows: {total_rows}"),
-                html.H4(f"Session Length (seconds): {session_length_seconds:.2f}"),
+                html.H4(f"Total Rows: {len(df)}"),
+                html.H4(f"Session Length (seconds): {len(df) / 250:.2f}"),
                 html.H4("Segments per Class:"),
-                html.Pre(segments_count_text),
-                *[dcc.Graph(id=f'segment-graph-{i}', figure={}) for i in range(4)]
+                html.Pre("\n".join([f"{cls}: {len(segs)} segments" for cls, segs in segments.items()])),
+                *segment_graph_components
             ], style={'width': '50%', 'display': 'inline-block', 'verticalAlign': 'top', 'height': '95vh', 'overflowY': 'scroll'}),
         ]),
         
@@ -129,35 +145,35 @@ if __name__ == '__main__':
             n_intervals=0
         )
     ])
-    
+
     @app.callback(
         [Output(f'eeg-{i}', 'figure') for i in range(1, 9)] +
-        [Output(f'segment-graph-{i}', 'figure') for i in range(4)],
+        [Output(f'segment-graph-{cls}', 'figure') for cls in segments.keys()],
         [Input('interval-component', 'n_intervals')]
     )
     def update_graph(n):
-        # Update EEG graphs independently
+        # Update EEG graphs to skip the first 100 points
         eeg_figures = [
-            go.Figure(data=[go.Scatter(y=df[f'EEG {i}'], mode='lines')]).update_layout(
+            go.Figure(data=[go.Scatter(y=df[f'EEG {i}'][100:], mode='lines')]).update_layout(  # Adjusted here
                 title=f'EEG {i}',
-                margin=dict(l=40, r=40, t=40, b=40),  # Adjusted margins
-                plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
+                margin=dict(l=40, r=40, t=40, b=40),
+                plot_bgcolor='rgba(0,0,0,0)',
             ) for i in range(1, 9)
         ]
-        # for fig in eeg_figures:
-        #     fig.update_yaxes(range=[230_000,270_000])
         
-        # Update segment graphs independently
+        # Update segment graphs dynamically based on the segments dictionary
         segment_figures = []
-        classes = list(segments.keys())[:4]  # Adjust as necessary for the number of classes you wish to display
-        for idx, cls in enumerate(classes):
-            segments_list = segments[cls]
-            segment_index = n % len(segments_list)  # Ensures cycling through each segment independently
+        for cls, segments_list in segments.items():
+            segment_index = n % len(segments_list)
             segment = segments_list[segment_index]
             fig = go.Figure()
             for i in range(1, 9):
-                # Ensure each segment is plotted independently
-                fig.add_trace(go.Scatter(x=np.arange(len(segment)), y=segment[f'EEG {i}'], mode='lines', name=f'EEG {i}'))
+                # Ensure each segment graph reflects independent data
+                # and adjust the x-axis if necessary to reflect skipping the first 100 points
+                segment_length = len(segment)
+                x_values = np.arange(segment_length)[20000:] if segment_length > 20000 else np.arange(segment_length)
+                y_values = segment[f'EEG {i}'][20000:] if segment_length > 20000 else segment[f'EEG {i}']
+                fig.add_trace(go.Scatter(x=x_values, y=y_values, mode='lines', name=f'EEG {i}'))
             fig.update_layout(
                 title=f'Class: {cls}, Segment: {segment_index + 1}',
                 margin=dict(l=40, r=40, t=40, b=40),
