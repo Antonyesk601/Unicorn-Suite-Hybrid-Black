@@ -155,7 +155,7 @@ class ExperimentInstance:
             fileName = self.config.SubjectID + "-" + fileName
         if not os.path.exists("RecordedSessions"):
             os.mkdir("RecordedSessions")
-        with open(f"RecordedSessions/{fileName}", "a") as file:
+        with open(os.path.join("RecordedSessions",f"{fileName}"), "a") as file:
             headers = [x.name for x in self.config.HeadsetConfig.channels]
             headers.append("State")
             file.write(",".join(headers) + "\n")
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     np.random.seed(seed = int(time.time()))
     np.random.shuffle(recordSets)
     print(recordSets)
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="MohammedElgemeie")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="Antony/Antony")
     viewer = PromptViewer(
         [],
         {

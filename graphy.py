@@ -105,7 +105,8 @@ if __name__ == '__main__':
         sys.exit(1)
     
     directory_path = sys.argv[1]
-    csv_file_name = 'Antony-2024-03-16-12-33-17.csv'#find_latest_csv(directory_path)
+    csv_file_name = 'Antony-2024-03-16-12-33-17.csv'
+    csv_file_name = find_latest_csv(directory_path)
     if csv_file_name is None:
         sys.exit("No CSV file found. Exiting application.")
 
@@ -115,7 +116,9 @@ if __name__ == '__main__':
     eeg_columns = [col for col in df.columns if 'EEG' in col]
 
     df = remove_outliers(df, eeg_columns)
-
+    #remove rows if Validation Indicator is 0
+    df = df[df['Validation Indicator'] == 1]
+    # print(df.head())
     segments = identify_segments(df)  # Assuming you have this function defined
 
     app = dash.Dash(__name__)
