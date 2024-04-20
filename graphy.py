@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     eeg_columns = [col for col in df.columns if 'EEG' in col]
 
-    df = remove_outliers(df, eeg_columns)
+    # df = remove_outliers(df, eeg_columns)
     #remove rows if Validation Indicator is 0
     df = df[df['Validation Indicator'] == 1]
     # print(df.head())

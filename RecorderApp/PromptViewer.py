@@ -185,6 +185,8 @@ class ExperimentInstance:
         print("Started Acquisition")
         ReadTask  = Thread(target=self.RecordContinuously,args=(run,))
         ReadTask.start()
+        self.CurrentState = 'WarmUp'
+        await asyncio.sleep(60)
         for choice in self.config.ExperimentOrder:
             print("Rest")
             self.CurrentState = "Rest"
