@@ -1,4 +1,6 @@
-#!/home/mariam/Grad_Project/Unicorn-Suite-Hybrid-Black/env/bin/python3.11
+#!/bin/sh
+'''exec' "/home/eslam/Desktop/Grad work/Unicorn-Suite-Hybrid-Black/env/bin/python3.11" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys
