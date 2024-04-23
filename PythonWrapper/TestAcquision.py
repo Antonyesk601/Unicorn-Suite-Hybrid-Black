@@ -15,7 +15,7 @@ def Main():
     programErrorStatus = Unicorn.UnicornReturnStatus.Success
     deviceHandle = 0
     try:
-        availableDevices, programErrorStatus : tuple[list[str],Unicorn.UnicornReturnStatus] = Unicorn.Unicorn.GetAvailableDevices(True)
+        availableDevices, programErrorStatus = Unicorn.Unicorn.GetAvailableDevices(True)
         if len(availableDevices) < 1 :
             print("No device available. Please pair with a Unicorn device first.")
             programErrorStatus = Unicorn.UnicornReturnStatus.GeneralError
