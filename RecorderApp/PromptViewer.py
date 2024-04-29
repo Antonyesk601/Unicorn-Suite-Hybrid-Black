@@ -253,7 +253,7 @@ if __name__ == "__main__":
     np.random.seed(seed = int(time.time()))
     np.random.shuffle(recordSets)
     print(recordSets)
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="AhmadSameh/AhmadSameh")
+    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="EslamAhmed/EslamAhmed")
     viewer = PromptViewer(
         [],
         {
