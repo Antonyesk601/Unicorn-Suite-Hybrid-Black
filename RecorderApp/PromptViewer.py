@@ -11,9 +11,10 @@ from threading import Thread
 from queue import Queue
 import aiofiles
 import uvloop
-import datetime 
+import datetime
 from pygame import mixer
 import time
+
 uvloop.install()
 sys.path.append(os.path.abspath("."))
 from PythonWrapper import Unicorn
@@ -77,15 +78,18 @@ class ExperimentConfig:
     AudioFile: str = "RecorderApp/Signal.mp3"
     HeadsetSerial: str = "UN-2021.12.19"
 
+
 @dataclass
 class Run:
-    run:bool
+    run: bool
+
+
 class ExperimentInstance:
     def __init__(self, config: ExperimentConfig, promptViewer: PromptViewer):
         self.config = config
         self.PromptViewer = promptViewer
         self.OutputQueue: Queue[tuple[list[float], str]] = Queue()
-        
+
     def Config(self):
         mixer.init()
         mixer.music.load(self.config.AudioFile)
@@ -112,7 +116,6 @@ class ExperimentInstance:
         except Exception as e:
             print(e)
 
-
     async def StartExperiment(self):
         self.ReadTask = self.ExperimentThread()
         await self.ReadTask
@@ -131,8 +134,8 @@ class ExperimentInstance:
                 yield getDataOutput[0]
             else:
                 print("Failed to get Data", getDataOutput[1])
-    
-    def RecordContinuously(self,run:Optional[Run]=None):
+
+    def RecordContinuously(self, run: Optional[Run] = None):
         if self.config.HeadsetConfig is None:
             raise Exception("Headset Config Not Set")
         while (True and run is None) or run.run:
@@ -142,9 +145,10 @@ class ExperimentInstance:
             if getDataOutput[1] == Unicorn.UnicornReturnStatus.Success:
                 # print("GOT DATA")
                 # print(getDataOutput)
-                self.OutputQueue.put((getDataOutput[0],self.CurrentState))
+                self.OutputQueue.put((getDataOutput[0], self.CurrentState))
             else:
                 print("Failed to get Data", getDataOutput[1])
+
     def WriteThread(self):
         # file: aiofiles.threadpool.text.AsyncTextIOWrapper
         if self.config.HeadsetConfig is None:
@@ -155,8 +159,8 @@ class ExperimentInstance:
             fileName = self.config.SubjectID + "-" + fileName
         if not os.path.exists("RecordedSessions"):
             os.mkdir("RecordedSessions")
-        
-        with open(os.path.join("RecordedSessions",f"{fileName}"), "a") as file:
+
+        with open(os.path.join("RecordedSessions", f"{fileName}"), "a") as file:
             headers = [x.name for x in self.config.HeadsetConfig.channels]
             headers.append("State")
             file.write(",".join(headers) + "\n")
@@ -178,39 +182,42 @@ class ExperimentInstance:
             raise Exception("Device not connected")
         else:
             print(self.config)
-        self.CurrentState = "Wait"
-        self.Unicorn.StartAcquisition(self.HandleVal, False)
-        run = Run(run=True)
-        writeThread = Thread(target=self.WriteThread)
-        writeThread.start()
-        print("Started Acquisition")
-        ReadTask  = Thread(target=self.RecordContinuously,args=(run,))
-        ReadTask.start()
-        self.CurrentState = 'WarmUp'
-        await asyncio.sleep(60)
-        for choice in self.config.ExperimentOrder:
-            print("Rest")
-            self.CurrentState = "Rest"
-            print(self.config.BreakLength / 1000)
-            self.PromptViewer.displayNamedPrompt("Rest")
-            await asyncio.sleep(self.config.BreakLength / 1000)
-            # self.Unicorn.StopAcquisition(self.HandleVal)
+        try:
             self.CurrentState = "Wait"
-            mixer.music.play()
-            cv2.waitKey(0)
-            self.CurrentState = str(choice.value)
-            print(choice.value)
-            print(self.config.RecordLength / 1000)
-            self.PromptViewer.displayNamedPrompt(choice.value)
-            await asyncio.sleep(self.config.RecordLength / 1000)
-            self.CurrentState = "Wait"
-            mixer.music.play()
-            cv2.waitKey(0)
-
+            self.Unicorn.StartAcquisition(self.HandleVal, False)
+            run = Run(run=True)
+            writeThread = Thread(target=self.WriteThread)
+            writeThread.start()
+            print("Started Acquisition")
+            ReadTask = Thread(target=self.RecordContinuously, args=(run,))
+            ReadTask.start()
+            self.CurrentState = "WarmUp"
+            await asyncio.sleep(60)
+            for choice in self.config.ExperimentOrder:
+                print("Rest")
+                self.CurrentState = "Rest"
+                print(self.config.BreakLength / 1000)
+                self.PromptViewer.displayNamedPrompt("Rest")
+                await asyncio.sleep(self.config.BreakLength / 1000)
+                # self.Unicorn.StopAcquisition(self.HandleVal)
+                self.CurrentState = "Wait"
+                mixer.music.play()
+                cv2.waitKey(0)
+                self.CurrentState = str(choice.value)
+                print(choice.value)
+                print(self.config.RecordLength / 1000)
+                self.PromptViewer.displayNamedPrompt(choice.value)
+                await asyncio.sleep(self.config.RecordLength / 1000)
+                self.CurrentState = "Wait"
+                mixer.music.play()
+                cv2.waitKey(0)
+        except Exception as e:
+            print(e)
+            exit()
         try:
             print("END")
             run.run = False
-            self.OutputQueue.put(([],"DONE"))
+            self.OutputQueue.put(([], "DONE"))
             self.Unicorn.StopAcquisition(self.HandleVal)
             self.Unicorn.CloseDevice(self.HandleVal)
         except:
@@ -250,10 +257,12 @@ if __name__ == "__main__":
         RecordChoices.Select,
         RecordChoices.Select,
     ]
-    np.random.seed(seed = int(time.time()))
+    np.random.seed(seed=int(time.time()))
     np.random.shuffle(recordSets)
     print(recordSets)
-    exp = ExperimentConfig(ExperimentOrder=recordSets, SubjectID="AhmadSameh/AhmadSameh")
+    exp = ExperimentConfig(
+        ExperimentOrder=recordSets, SubjectID="AhmadSameh/AhmadSameh"
+    )
     viewer = PromptViewer(
         [],
         {
