@@ -192,13 +192,15 @@ class ExperimentInstance:
             ReadTask = Thread(target=self.RecordContinuously, args=(run,))
             ReadTask.start()
             self.CurrentState = "WarmUp"
-            await asyncio.sleep(60)
+            for i in range(60):
+                cv2.waitKey(1000)
             for choice in self.config.ExperimentOrder:
                 print("Rest")
                 self.CurrentState = "Rest"
                 print(self.config.BreakLength / 1000)
                 self.PromptViewer.displayNamedPrompt("Rest")
-                await asyncio.sleep(self.config.BreakLength / 1000)
+                cv2.waitKey(self.config.BreakLength)
+                await asyncio.sleep(0.01)
                 # self.Unicorn.StopAcquisition(self.HandleVal)
                 self.CurrentState = "Wait"
                 mixer.music.play()
@@ -207,7 +209,8 @@ class ExperimentInstance:
                 print(choice.value)
                 print(self.config.RecordLength / 1000)
                 self.PromptViewer.displayNamedPrompt(choice.value)
-                await asyncio.sleep(self.config.RecordLength / 1000)
+                cv2.waitKey(self.config.RecordLength)
+                await asyncio.sleep(0.01)
                 self.CurrentState = "Wait"
                 mixer.music.play()
                 cv2.waitKey(0)
