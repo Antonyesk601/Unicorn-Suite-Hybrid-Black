@@ -3,9 +3,8 @@
 __pycache__/
 *.pyc
 ./env
-<<<<<<< HEAD
-/env
+./env
 env
-=======
+env
 *env*
->>>>>>> f6415572840bfc5c6a41714fda2e65bc070bf8b1
+
