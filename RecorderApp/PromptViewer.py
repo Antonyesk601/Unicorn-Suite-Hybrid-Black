@@ -265,7 +265,7 @@ if __name__ == "__main__":
     print(recordSets)
 
     exp = ExperimentConfig(
-        ExperimentOrder=recordSets, SubjectID="Mariam/Mariam"
+        ExperimentOrder=recordSets, SubjectID="YoussefHesham/YoussefHesham"
     )
     
     viewer = PromptViewer(
